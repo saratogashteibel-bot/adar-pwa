@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#378ADD">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Adar Board">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<title>Adar Board</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111;-webkit-font-smoothing:antialiased}
+.header{background:#fff;border-bottom:1px solid #eee;padding:20px 16px 16px;position:sticky;top:0;z-index:10}
+.eyebrow{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:4px}
+.title-row{display:flex;align-items:center;justify-content:space-between}
+h1{font-size:22px;font-weight:600;color:#111}
+.add-btn{font-size:13px;padding:7px 14px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#333;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:16px}
+.card{background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;cursor:pointer;text-align:left;width:100%;transition:border-color 0.15s}
+.card.active{border-width:2px}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;margin-bottom:10px}
+.card-name{font-size:13px;font-weight:600;color:#111;line-height:1.3;margin-bottom:2px}
+.card.active .card-name{color:var(--ct)}
+.card-type{font-size:11px;color:#888}
+.card.active .card-type{color:var(--ct);opacity:0.7}
+.feed-wrap{padding:0 16px 80px}
+.feed-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.feed-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.feed-name{font-size:15px;font-weight:600;color:#111}
+.feed-sub{font-size:11px;color:#888}
+.compose{background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin-bottom:14px}
+input,textarea{width:100%;font-size:14px;padding:10px 12px;border-radius:8px;border:1px solid #ddd;background:#f8f8f8;color:#111;font-family:inherit;outline:none;display:block}
+input:focus,textarea:focus{border-color:#378ADD}
+textarea{resize:none;margin-top:8px}
+.compose-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.attach{font-size:12px;padding:7px 12px;border-radius:8px;border:1px solid #ddd;background:#f8f8f8;color:#666;cursor:pointer}
+.post{margin-left:auto;font-size:13px;padding:9px 20px;border-radius:8px;border:none;background:#378ADD;color:#fff;font-weight:600;cursor:pointer}
+.post:disabled{background:#ccc;cursor:default}
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{background:#fff;border:1px solid #eee;border-radius:12px;padding:14px}
+.note-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.note-av{width:28px;height:28px;border-radius:50%;background:#f0f0f0;color:#888;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.note-who{font-size:13px;font-weight:600}
+.note-time{font-size:11px;color:#888;margin-left:auto}
+.note-body{font-size:14px;color:#333;line-height:1.6}
+.attach-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:#378ADD;text-decoration:none;background:#f0f7ff;padding:6px 10px;border-radius:8px}
+.empty{padding:32px 16px;text-align:center;color:#888;font-size:13px;background:#fff;border:1px solid #eee;border-radius:12px}
+.no-sel{padding:40px 16px;text-align:center;color:#888;font-size:13px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:flex-end;justify-content:center}
+.modal.open{display:flex}
+.modal-box{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:14px}
+.modal-row{display:flex;gap:8px;margin-top:12px}
+.cancel{font-size:13px;padding:9px 14px;border-radius:8px;border:1px solid #ddd;background:none;color:#888;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="eyebrow">Adar Global</div>
+  <div class="title-row">
+    <h1>Team board</h1>
+    <button class="add-btn" onclick="openModal()">+ Add</button>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+<div id="feed"></div>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-title">New entity</div>
+    <input id="new-name" placeholder="Name (e.g. Sales, Reydel Tire)" />
+    <input id="new-type" placeholder="Type (e.g. Department, Client)" style="margin-top:8px" />
+    <div class="modal-row">
+      <button class="post" onclick="addEntity()">Add</button>
+      <button class="cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'REPLACE_WITH_YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'REPLACE_WITH_YOUR_SUPABASE_ANON_KEY';
+
+const P=[
+  {bg:'#E6F1FB',border:'#378ADD',text:'#0C447C'},
+  {bg:'#E1F5EE',border:'#1D9E75',text:'#085041'},
+  {bg:'#EEEDFE',border:'#7F77DD',text:'#3C3489'},
+  {bg:'#FAEEDA',border:'#BA7517',text:'#633806'},
+  {bg:'#FAECE7',border:'#D85A30',text:'#712B13'},
+  {bg:'#FBEAF0',border:'#D4537E',text:'#72243E'},
+  {bg:'#EAF3DE',border:'#639922',text:'#27500A'},
+];
+
+let entities=[],notes=[],activeId=null,channel=null;
+const ini=n=>n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+const ago=ts=>{const d=Date.now()-new Date(ts).getTime();if(d<60000)return'just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';return Math.floor(d/86400000)+'d ago';};
+
+async function api(path,method='GET',body=null){
+  const opts={method,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':''}};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,opts);
+  return r.json();
+}
+
+async function loadEntities(){
+  entities=await api('entities?select=*&order=created_at.asc');
+  renderGrid();
+}
+
+async function loadNotes(id){
+  notes=await api(`notes?select=*&entity_id=eq.${id}&order=created_at.desc`);
+  renderFeed();
+}
+
+function subscribe(id){
+  if(channel)channel.close();
+  // Realtime via Supabase websocket
+  const ws=new WebSocket(`${SUPABASE_URL.replace('https','wss')}/realtime/v1/websocket?apikey=${SUPABASE_KEY}&vsn=1.0.0`);
+  ws.onopen=()=>{
+    ws.send(JSON.stringify({topic:`realtime:public:notes:entity_id=eq.${id}`,event:'phx_join',payload:{},ref:'1'}));
+  };
+  ws.onmessage=e=>{
+    const msg=JSON.parse(e.data);
+    if(msg.event==='INSERT'&&msg.payload?.record){
+      notes=[msg.payload.record,...notes];
+      renderFeed();
+    }
+  };
+  channel=ws;
+}
+
+function renderGrid(){
+  document.getElementById('grid').innerHTML=entities.map(e=>{
+    const p=P[e.color%P.length];
+    const act=e.id===activeId;
+    return`<button class="card${act?' active':''}" style="${act?`--ct:${p.text};border-color:${p.border};background:${p.bg}`:''}" onclick="sel('${e.id}')">
+      <div class="avatar" style="background:${act?'rgba(0,0,0,0.1)':p.bg};color:${p.text}">${ini(e.name)}</div>
+      <div class="card-name">${e.name}</div>
+      <div class="card-type">${e.type}</div>
+    </button>`;
+  }).join('');
+}
+
+function renderFeed(){
+  const el=document.getElementById('feed');
+  if(!activeId){el.innerHTML='<div class="no-sel">Tap an entity to view updates</div>';return;}
+  const e=entities.find(x=>x.id===activeId);
+  const p=P[e.color%P.length];
+  const saved=localStorage.getItem('adar-who')||'';
+  const noteHtml=notes.length===0
+    ?'<div class="empty">No updates yet — post the first one</div>'
+    :notes.map(n=>`<div class="note">
+      <div class="note-top"><div class="note-av">${ini(n.who)}</div><span class="note-who">${n.who}</span><span class="note-time">${ago(n.created_at)}</span></div>
+      <div class="note-body">${n.body}</div>
+      ${n.attachment_url?`<a class="attach-link" href="${n.attachment_url}" target="_blank">📎 ${n.attachment_name||'Attachment'}</a>`:''}
+    </div>`).join('');
+  el.innerHTML=`<div class="feed-wrap">
+    <div class="feed-hdr">
+      <div class="feed-av" style="background:${p.bg};color:${p.text}">${ini(e.name)}</div>
+      <div><div class="feed-name">${e.name}</div><div class="feed-sub">${e.type}</div></div>
+    </div>
+    <div class="compose">
+      <input id="poster" placeholder="Your name" value="${saved}" maxlength="40" />
+      <textarea id="msg" placeholder="What's the update?" rows="3"></textarea>
+      <div class="compose-row">
+        <button class="attach" onclick="document.getElementById('file').click()">📎 Attach</button>
+        <input type="file" id="file" style="display:none" />
+        <button class="post" id="postbtn" onclick="post()">Post</button>
+      </div>
+    </div>
+    <div class="notes">${noteHtml}</div>
+  </div>`;
+}
+
+async function sel(id){
+  activeId=id;
+  renderGrid();
+  renderFeed();
+  await loadNotes(id);
+  subscribe(id);
+}
+
+async function post(){
+  const who=document.getElementById('poster').value.trim();
+  const body=document.getElementById('msg').value.trim();
+  if(!who||!body)return;
+  localStorage.setItem('adar-who',who);
+  document.getElementById('postbtn').disabled=true;
+  document.getElementById('postbtn').textContent='Posting…';
+
+  let attachment_url=null,attachment_name=null;
+  const file=document.getElementById('file').files[0];
+  if(file){
+    const ext=file.name.split('.').pop();
+    const path=`${activeId}/${Date.now()}.${ext}`;
+    const r=await fetch(`${SUPABASE_URL}/storage/v1/object/attachments/${path}`,{
+      method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type},body:file
+    });
+    if(r.ok){attachment_url=`${SUPABASE_URL}/storage/v1/object/public/attachments/${path}`;attachment_name=file.name;}
+  }
+
+  await api('notes','POST',{entity_id:activeId,who,body,attachment_url,attachment_name});
+  await loadNotes(activeId);
+}
+
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');document.getElementById('new-name').value='';document.getElementById('new-type').value='';}
+
+async function addEntity(){
+  const name=document.getElementById('new-name').value.trim();
+  if(!name)return;
+  const type=document.getElementById('new-type').value.trim()||'Entity';
+  const res=await api('entities','POST',{name,type,color:entities.length});
+  if(res[0]){entities=[...entities,res[0]];renderGrid();}
+  closeModal();
+}
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
+loadEntities();
+</script>
+</body>
+</html>
